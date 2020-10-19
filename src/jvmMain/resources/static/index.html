@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>fritz2 • TodoMVC</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div class="target" id="target">
+
+</div>
+<!-- Scripts here. Don't remove ↓ -->
+<script src="expense-fritz2.js"></script>
+<script>
+    (function() {
+        console.log("Authentic JS")
+        const button = document.getElementById("#button");
+        document.onclick = function(e) {
+            if (e.target.id == "button") {
+                const inputText = document.getElementById("input-Text");
+                inputText.focus()
+            }
+        }
+    })()
+</script>
+</body>
+</html>
