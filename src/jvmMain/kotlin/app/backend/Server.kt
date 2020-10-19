@@ -76,8 +76,6 @@ fun Application.main() {
         SchemaUtils.create(UsersTable, TransactionsTable)
     }
 
-    val TransactionsDB =
-
     routing {
 
         route("/api") {

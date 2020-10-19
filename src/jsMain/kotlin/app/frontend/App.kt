@@ -39,6 +39,7 @@ object NewTransactionStore : RootStore<NewTransaction>(NewTransaction()) {
 
     private val validator = NewTransactionValidator()
     private val serializer = NewTransactionSerializer
+    private val transactionSerializer = TransactionSerializer
 
     val updateAmount = handle<String> { txn, amount ->
         if (amount.toFloatOrNull() == null || amount.tooManyDecimals()) {
@@ -48,10 +49,12 @@ object NewTransactionStore : RootStore<NewTransaction>(NewTransaction()) {
 
     val save = handleAndOffer<NewTransaction, Unit> { oldTxn, newTxn ->
         if (validator.isValid(newTxn, "add")) {
-            transactions.body(serializer.write(newTxn))
+            val txn = transactions.body(serializer.write(newTxn))
                 .contentType("application/json; charset=utf-8")
-                .acceptJson().post()
-            localStorage.saveOrUpdate(Transaction(randomId(), newTxn.text, newTxn.amount.toFloat())).let {
+                .acceptJson().post().getBody().let {
+                    transactionSerializer.read(it)
+                }
+            localStorage.saveOrUpdate(txn).let {
                 offer(Unit)
                 NewTransaction()
             }
@@ -94,11 +97,11 @@ fun List<Transaction>.transactionFilter(f: TransactionFilter): List<Transaction>
         this.filter { txn -> it(txn) }
     }
 
-fun List<Transaction>.asMoney() = map { it.amount }.reduce { acc, fl -> acc + fl }.asMoney()
+fun List<Transaction>.asMoney() = if (isEmpty()) "$0.00" else map { it.amount }.reduce { acc, fl -> acc + fl }.asMoney()
 
-fun List<Transaction>.expense(): String = transactionFilter(TransactionFilter.EXPENSE).asMoney()
+fun List<Transaction>.expense(): String =  if (isEmpty()) "$0.00" else transactionFilter(TransactionFilter.EXPENSE).asMoney()
 
-fun List<Transaction>.income(): String = transactionFilter(TransactionFilter.INCOME).asMoney()
+fun List<Transaction>.income(): String = if (isEmpty()) "$0.00" else transactionFilter(TransactionFilter.INCOME).asMoney()
 
 
 @ExperimentalStdlibApi
@@ -118,14 +121,13 @@ fun main() {
         }
     }
 
-    fun HtmlElements.categorySummary(categoryName: String, className: String, transactions: Flow<String>) {
+    fun HtmlElements.categorySummary(categoryName: String, className: String, transactions: Flow<String>) =
         div {
             h4 { +categoryName }
             p("money $className") {
                 transactions.bind()
             }
         }
-    }
 
     fun HtmlElements.incomeExpense() = div("inc-exp-container") {
         categorySummary("Income", "plus", income)

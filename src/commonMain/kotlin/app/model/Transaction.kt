@@ -75,3 +75,10 @@ fun String.tooManyDecimals(): Boolean {
         indexOf('.') < lastCharAt
     } else false
 }
+
+@Lenses
+data class User(
+    val id: String = "",
+    val username: String = ""
+)
+
